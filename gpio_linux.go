@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 	"syscall"
+	"time"
 )
 
 //By default, pins 14 and 15 boot to UART mode, so they are going to be ignored for now.
@@ -178,8 +179,8 @@ func (p *pin) Clear() {
 // Get retrieves the current pin level.
 func (p *pin) Get() bool {
 	bytes := make([]byte, 1)
-	_, p.err = p.valueFile.Read(bytes)
-	return bytes[0] != 0
+	_, p.err = p.valueFile.ReadAt(bytes, 0)
+	return bytes[0] == bytesSet[0]
 }
 
 // Watch waits for the edge level to be triggered and then calls the callback
@@ -253,6 +254,7 @@ func expose(pin int) (string, error) {
 	if _, statErr := os.Stat(pinBase); os.IsNotExist(statErr) {
 		err = writeFile(filepath.Join(gpiobase, "export"), "%d", pin)
 	}
+	time.Sleep(100 * time.Millisecond)
 	return pinBase, err
 }
 
