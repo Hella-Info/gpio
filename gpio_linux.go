@@ -233,6 +233,10 @@ func (p *pin) EndWatch() error {
 
 }
 
+func (p *pin) Pull(direction PullDirection) {
+	panic("Pull is not yet implemented!")
+}
+
 // Wait blocks while waits for the pin state to match the condition, then returns.
 func (p *pin) Wait(condition bool) {
 	panic("Wait is not yet implemented!")

@@ -19,6 +19,14 @@ const (
 	EdgeBoth    Edge = "both"
 )
 
+type PullDirection uint32
+
+const (
+	PullOff PullDirection = iota
+	PullDown
+	PullUp
+)
+
 // IRQEvent defines the callback function used to inform the caller
 // of an interrupt.
 type IRQEvent func()
@@ -34,6 +42,7 @@ type Pin interface {
 	BeginWatch(Edge, IRQEvent) error // calls the function argument when an edge trigger event occurs
 	EndWatch() error                 // stops watching the pin
 	Wait(bool)                       // wait for pin state to match boolean argument
+	Pull(direction PullDirection)    // sets a pullup or pulldown for a pin
 
 	Err() error // returns the last error state
 }
