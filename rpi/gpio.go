@@ -52,8 +52,9 @@ type pin struct {
 }
 
 // OpenPin returns a gpio.Pin implementation specalised for the RPi.
-func OpenPin(number int, mode gpio.Mode) (gpio.Pin, error) {
+func OpenPin(number int, mode gpio.Mode, direction gpio.PullDirection) (gpio.Pin, error) {
 	initOnce.Do(initRPi)
+	pull(uint8(number), direction)
 	p, err := gpio.OpenPin(number, mode)
 	return &pin{Pin: p, pin: uint8(number)}, err
 }
@@ -86,22 +87,23 @@ func GPIOFSel(pin, mode uint8) {
 	*gpfsel[offset] = value & mask
 }
 
-func (p *pin) Pull(direction gpio.PullDirection) {
-	gppud_clk := (*uint32)(unsafe.Pointer(&gpiomem[BCM2835_GPPUDCLK0+p.pin/8]))
-	shift := (p.pin % 8)
+func pull(pin uint8, direction gpio.PullDirection) {
+	clk_offset := uint32(pin / 32)
+	gppud_clk := (*uint32)(unsafe.Pointer(&gpiomem[BCM2835_GPPUDCLK0+clk_offset*4]))
+	shift := (pin % 32)
 
 	switch direction {
 	case gpio.PullUp:
-		*gppud = (*gppud & ^uint32(3)) | 2
+		*gppud = 2
 	case gpio.PullDown:
-		*gppud = (*gppud & ^uint32(3)) | 1
+		*gppud = 1
 	default:
-		*gppud &= ^uint32(3)
+		*gppud = 0
 	}
 
-	time.Sleep(150 * time.Nanosecond)
+	time.Sleep(5 * time.Microsecond)
 	*gppud_clk = 1 << shift
-	time.Sleep(150 * time.Nanosecond)
-	*gppud &= ^uint32(3)
+	time.Sleep(5 * time.Microsecond)
+	*gppud = 0
 	*gppud_clk = 0
 }
